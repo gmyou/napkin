@@ -18,30 +18,16 @@ tb_menu_rate_tag 값 추출
     
 """
 
-#tablename = "tb_menu_rate_tag"
-#colname = "RATE"
-tablename = "tb_menu_with_tag"
-colname = "WITH"
-
-cnx = MySQLdb.connect('localhost', 'root', 'unicad10', 'napkin')
-cursor = cnx.cursor()
-
-def dbClose():
-    cursor.close()
-    cnx.close()
-
-def process1():
+def process1(colname):
     
-    global cnx
-    global cursor
+    #TODO DB Connection Module 
+    cnx = MySQLdb.connect('localhost', 'root', 'unicad10', 'napkin')
+    cursor = cnx.cursor()
     
-    global tablename
-    global colname
-    
-    query = ("select MENUCD, %sTAG, TAG_RATE from %s where %sTAG<>'0' group by MENUCD, %sTAG having count(*)=1" % (colname, tablename, colname, colname))
+    query = ("select MENUCD, %sTAG, TAG_RATE from tb_menu_%s_tag where %sTAG<>'0' group by MENUCD having count(*)=1;" % (colname, colname, colname))
     print(query)
-    
     #exit()
+    
     try:
         cursor.execute(query)
         result = True
@@ -49,12 +35,13 @@ def process1():
         print ("Unexpected error: " , sys.exc_info()[0] , sys.exc_info()[1])
         result = False
 
-    #print (result)
-    
+    print (result)
+    #exit()
     
     if (result):
         
         sql = ('top_%s_tag.sql' % colname.lower())
+
         f = open(sql, 'w')
         cnx.commit()
         
@@ -64,9 +51,6 @@ def process1():
             TAG = row[1]
             RATE = str(row[2])
             
-            """
-            #upt_query = "update tb_menu set TOPRATE='"+str(row[1])+"', TOPRATE_RATE="+str(row[2])+" where MENUCD="+str(row[0])+';\n'
-            """
             upt_query = ("update tb_menu set TOP%s='%s', TOP%s_RATE=%s where MENUCD=%d;\n" % (colname, TAG, colname, RATE, MENUCD) )
             print(upt_query)
             f.write(upt_query)
@@ -74,9 +58,144 @@ def process1():
         f.close()
     
     
-    dbClose()
+    cursor.close()
+    cnx.close()
 
+"""
+@return result list
+"""
+def process2(colname):
+    
+    cnx = MySQLdb.connect('localhost', 'root', 'unicad10', 'napkin')
+    cursor = cnx.cursor()
+    
+    query = ("select MENUCD from tb_menu_%s_tag where %sTAG<>'0' group by MENUCD having count(*)>1;" % (colname, colname))
+    print(query)
+    #exit()
+    
+    try:
+        cursor.execute(query)
+        result = True
+    except:
+        print ("Unexpected error: " , sys.exc_info()[0] , sys.exc_info()[1])
+        result = False
+
+    print (result)
+    #exit()
+    
+    if (result):
+        
+        sql = ('top_%s_tag.sql' % colname.lower())
+
+        f = open(sql, 'w')
+        cnx.commit()
+        
+        return cursor.fetchall()
+    
+    
+    cursor.close()
+    cnx.close()
+ 
+
+def process3(colname, rows):
+    
+    cnx = MySQLdb.connect('localhost', 'root', 'unicad10', 'napkin')
+    cursor = cnx.cursor()
+    
+    sql = ('top_%s_tag_over2.sql' % colname.lower())
+    
+    f = open(sql, 'w')
+    f.write('')
+    f.close()
+        
+    for row in rows:
+        if (colname == 'RATE'):
+            query = ("select MENUCD, %sTAG, TAG_RATE from tb_menu_%s_tag where menucd=%d " 
+                    " order by  "
+                    "     case %stag " 
+                    "     when 'awesome' then 1 " 
+                    "     when 'awsome' then 1  "
+                    "     when 'good' then 2 "
+                    "     when 'soso' then 3 "
+                    "     when 'So-So' then 3 "
+                    "     when 'bad' then 4 "
+                    "     else 10 end asc "
+                    "     , TAG_CNT DESC "
+                    "     , NAPKIN_CNT DESC "
+                    "     limit 1;" % ( colname, colname, row[0], colname ))
+            
+        elif (colname == 'RATE'):
+        
+            query = ("select MENUCD, %sTAG, TAG_RATE from tb_menu_%s_tag where menucd=%d " 
+                    " order by  "
+                    "     case %stag " 
+                    "     WHEN 'Alone' THEN 1 " 
+                    "     WHEN 'Date' THEN 2 " 
+                    "     WHEN 'Friends' THEN 3 " 
+                    "     WHEN 'Family' THEN 4 " 
+                    "     WHEN 'Business' THEN 5 " 
+                    "     WHEN 'Party' THEN 6 " 
+                    "     else 10 end asc "
+                    "     , TAG_CNT DESC " 
+                    "     , NAPKIN_CNT DESC "
+                    "     limit 1;" % ( colname, colname, row[0], colname ))
+        else:
+            
+            print("Wrong Element(colname)!")
+            
+            cursor.close()
+            cnx.close()
+    
+            exit()
+            
+            
+        #print(query)
+        #exit()
+
+        try:
+            cursor.execute(query)
+            result = True
+        except:
+            print ("Unexpected error: " , sys.exc_info()[0] , sys.exc_info()[1])
+            result = False
+    
+        print (result)
+        #exit()
+        
+        if (result):
+            
+                
+
+    
+            f = open(sql, 'a')
+            cnx.commit()
+            
+            for row in cursor.fetchall():
+                
+                MENUCD = row[0]
+                TAG = row[1]
+                RATE = str(row[2])
+                
+                upt_query = ("update tb_menu set TOP%s='%s', TOP%s_RATE=%s where MENUCD=%d;\n" % (colname, TAG, colname, RATE, MENUCD) )
+                print(upt_query)
+                f.write(upt_query)
+                
+            f.close()
+        
+
+    cursor.close()
+    cnx.close()
 
 if __name__ == '__main__':
    
-    process1()
+    colname = sys.argv[1]
+    
+    #1:1
+    process1(colname)
+    
+    #1:Multi
+    rows = process2(colname)
+    process3(colname, rows)
+    
+    
+    
