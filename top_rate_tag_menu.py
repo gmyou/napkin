@@ -3,7 +3,7 @@
 from __future__ import print_function
 import MySQLdb, sys
 """
-데이터 만들기 작업 이후 실시간 반영은 헤단 메뉴만 처리하면 됨!
+데이터 만들기 작업 이후 실시간 반영은 헤당 메뉴만 처리하면 됨!
 
 선작업
     ALTER TABLE `napkin`.`tb_menu` ADD COLUMN `TOPRATE` VARCHAR(45) NULL  AFTER `REGDT` , ADD COLUMN `TOPRATE_RATE` DECIMAL(7,4) NULL  AFTER `TOPRATE` , ADD COLUMN `TOPWITH` VARCHAR(45) NULL  AFTER `TOPRATE_RATE` , ADD COLUMN `TOPWITH_RATE` DECIMAL(7,4) NULL  AFTER `TOPWITH` ;
